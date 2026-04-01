@@ -3,20 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>LinkMemo</title>
+<title>DTM</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #232733;
-  --surface3: #2a2e3d;
-  --border: #2e3345;
+  --bg: #ffffee;
+  --editorbg: #eee0d6;
+  --surface: #ffffee;
+  --surface2: #f2deba;
+  --surface3: #954035;
+  --border: #e5ddd0;
   --primary: #6c8cff;
   --primary-dim: #4a6ae0;
-  --text: #e4e6f0;
-  --text2: #8b90a5;
+  --text: #333333;
+  --text2: #7a1007;
   --text3: #5d6175;
   --danger: #ff5c6a;
   --success: #4ecb71;
@@ -33,118 +34,83 @@ body {
   user-select: none; -webkit-user-select: none;
 }
 
-/* ===========================
-   アプリ全体レイアウト
-   横方向flex: [ツールバー][サイドバー][エディタ]
-   =========================== */
-.app-container {
-  display: flex;
-  height: 100dvh;
-  overflow: hidden;
-}
+.app-container { display: flex; height: 100dvh; overflow: hidden; }
 
-/* ===== ツールバー ===== */
+/* ツールバー */
 .toolbar {
-  width: var(--toolbar-w);
-  min-width: var(--toolbar-w);
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  align-items: center;
-  padding: 10px 0; gap: 6px;
-  flex-shrink: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  width: var(--toolbar-w); min-width: var(--toolbar-w);
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0; gap: 6px; flex-shrink: 0;
+  overflow-y: auto; overflow-x: hidden;
 }
-
 .toolbar-btn {
   width: 36px; height: 36px;
   border: 1px solid var(--border); background: var(--surface2);
   color: var(--text2); border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 0.2s; font-size: 16px;
-  flex-shrink: 0;
+  cursor: pointer; transition: all 0.2s; font-size: 16px; flex-shrink: 0;
 }
 .toolbar-btn:hover { background: var(--surface3); color: var(--text); }
 .toolbar-btn:active { transform: scale(0.9); }
 .toolbar-btn.primary {
   background: linear-gradient(135deg, var(--primary), var(--accent));
-  border: none; color: #fff;
-  box-shadow: 0 2px 8px rgba(108,140,255,0.3);
+  border: none; color: #fff; box-shadow: 0 2px 8px rgba(108,140,255,0.3);
 }
 .toolbar-btn.primary:hover { transform: scale(1.05); }
 .toolbar-btn.danger { color: var(--danger); }
 .toolbar-btn.copied {
   background: rgba(78,203,113,0.15); border-color: var(--success); color: var(--success);
 }
-.toolbar-sep {
-  width: 24px; height: 1px;
-  background: var(--border); margin: 2px 0; flex-shrink: 0;
-}
+.toolbar-sep { width: 24px; height: 1px; background: var(--border); margin: 2px 0; flex-shrink: 0; }
 
-/* ===== サイドバー ===== */
+/* サイドバー */
 .sidebar {
-  display: flex; flex-direction: column;
-  background: var(--bg);
-  border-right: 1px solid var(--border);
-  flex-shrink: 0;
-  overflow: hidden;
-  transition: width 0.3s ease;
-  width: 420px;
+  display: flex; flex-direction: column; background: var(--bg);
+  border-right: 1px solid var(--border); flex-shrink: 0;
+  overflow: hidden; transition: width 0.3s ease; width: 420px;
 }
 .sidebar.collapsed { width: 0; min-width: 0; border-right: none; }
 
-/* ===== ヘッダー（1.5倍） ===== */
 .header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 15px 18px;
-  display: flex; align-items: center; gap: 12px;
-  flex-shrink: 0;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 15px 18px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
 }
 .header h1 {
   font-size: 26px; font-weight: 700; flex: 1;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: linear-gradient(135deg, var(--text2), var(--danger));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   white-space: nowrap; overflow: hidden;
 }
 
-/* ===== 検索（1.5倍、下部配置） ===== */
-.search-bar {
-  padding: 9px 15px;
-  flex-shrink: 0;
-  border-top: 1px solid var(--border);
+/* サイドバー閉じるボタン（PC版のみ表示） */
+.sidebar-close-btn {
+  display: none;
 }
-.search-wrap { position: relative; }
-.search-wrap::before {
-  content: '🔍'; position: absolute; left: 15px; top: 50%;
-  transform: translateY(-50%); font-size: 20px;
-}
-.search-input {
-  width: 100%; padding: 12px 15px 12px 48px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 15px; color: var(--text); font-size: 21px;
-  outline: none; transition: border 0.2s;
-}
-.search-input:focus { border-color: var(--primary); }
 
-/* ===== ツリー（1.5倍） ===== */
-.tree-container {
-  padding: 6px 12px 20px; overflow-y: auto; flex: 1;
+.btn-icon {
+  width: 34px; height: 34px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text2); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; font-size: 16px;
 }
+.btn-icon:hover { background: var(--surface2); color: var(--text); }
+.btn-icon:active { transform: scale(0.93); }
+
+/* ツリー */
+.tree-container { padding: 6px 12px 20px; overflow-y: auto; flex: 1; }
 .tree-children { padding-left: 24px; }
-.tree-item { margin: 3px 0; }
+.tree-item { margin: 3px 0; position: relative; }
 
 .tree-folder-row {
   display: flex; align-items: center; gap: 6px;
-  padding: 12px 12px 12px 6px;
-  border-radius: 12px; cursor: pointer;
-  transition: all 0.15s; border: 1px solid transparent;
+  padding: 12px 12px 12px 10px; border-radius: 12px;
+  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  border: 2px solid transparent;
 }
 .tree-folder-row:hover { background: var(--surface); border-color: var(--border); }
-.tree-folder-row.selected {
-  background: rgba(255,204,2,0.08); border-color: var(--folder) !important;
-}
+.tree-folder-row.selected { background: rgba(255,204,2,0.08); border-color: var(--folder) !important; }
 
 .tree-toggle {
   width: 30px; height: 30px;
@@ -165,43 +131,91 @@ body {
   background: var(--surface2); padding: 2px 8px; border-radius: 9px; flex-shrink: 0;
 }
 
-.tree-drag-handle {
-  width: 30px; height: 30px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text3); font-size: 17px;
-  cursor: grab; flex-shrink: 0; touch-action: none; border-radius: 6px;
-}
-.tree-drag-handle:hover { background: var(--surface2); color: var(--text2); }
-.tree-drag-handle:active { cursor: grabbing; }
-
 .tree-memo-row {
   display: flex; align-items: center; gap: 6px;
-  padding: 10px 12px 10px 6px;
-  border-radius: 12px; cursor: pointer;
-  transition: all 0.15s; border: 1px solid transparent;
+  padding: 10px 12px 10px 10px; border-radius: 12px;
+  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  border: 2px solid transparent;
 }
 .tree-memo-row:hover { background: var(--surface); border-color: var(--border); }
-.tree-memo-row.active {
-  background: rgba(108,140,255,0.08); border-color: var(--primary);
-}
+.tree-memo-row.active { background: rgba(108,140,255,0.08); border-color: var(--primary); }
 
-.tree-memo-icon { font-size: 20px; flex-shrink: 0; color: var(--text2); margin-left: 2px; }
+.tree-memo-icon { font-size: 20px; flex-shrink: 0; color: var(--text2); }
 .tree-memo-title {
   flex: 1; font-size: 18px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .tree-memo-badges { display: flex; gap: 5px; flex-shrink: 0; }
 .tree-badge { font-size: 13px; padding: 2px 7px; border-radius: 8px; font-weight: 600; }
-.tree-badge.parent { background: rgba(255,179,71,0.15); color: var(--warning); }
+.tree-badge.parent { background: rgba(255,179,71,0.15); color: var(--danger); }
 .tree-badge.child { background: rgba(108,140,255,0.15); color: var(--primary); }
 
-/* ===== 下部ボタン（1.5倍） ===== */
+/* ドラッグ状態 */
+.dragging > .tree-folder-row,
+.dragging > .tree-memo-row {
+  opacity: 0.25 !important;
+  background: rgba(108,140,255,0.03) !important;
+  border: 2px dashed var(--text3) !important;
+}
+.drop-above > .tree-folder-row,
+.drop-above > .tree-memo-row {
+  border-top: 3px solid var(--primary) !important;
+  background: rgba(108,140,255,0.06) !important;
+}
+.drop-below > .tree-folder-row,
+.drop-below > .tree-memo-row {
+  border-bottom: 3px solid var(--primary) !important;
+  background: rgba(108,140,255,0.06) !important;
+}
+.drop-into > .tree-folder-row {
+  background: rgba(108,140,255,0.15) !important;
+  border: 2px solid var(--primary) !important;
+  box-shadow: inset 0 0 20px rgba(108,140,255,0.1);
+}
+
+/* ドラッグゴースト */
+.drag-ghost {
+  position: fixed; z-index: 99999; pointer-events: none;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 16px;
+  font-size: 16px; font-weight: 600; color: var(--text);
+  opacity: 0.75; box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  display: flex; align-items: center; gap: 8px;
+  max-width: 280px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  will-change: left, top;
+}
+
+/* 長押し中のフィードバック */
+.long-press-active > .tree-folder-row,
+.long-press-active > .tree-memo-row {
+  background: rgba(108,140,255,0.1) !important;
+  border-color: var(--primary-dim) !important;
+  transform: scale(1.02);
+  transition: all 0.15s;
+}
+
+/* 検索 */
+.search-bar {
+  padding: 9px 15px; flex-shrink: 0; border-top: 1px solid var(--border);
+}
+.search-wrap { position: relative; }
+.search-wrap::before {
+  content: '🔍'; position: absolute; left: 15px; top: 50%;
+  transform: translateY(-50%); font-size: 20px;
+}
+.search-input {
+  width: 100%; padding: 12px 15px 12px 48px;
+  background: var(--editorbg); border: 1px solid var(--border);
+  border-radius: 15px; color: var(--text); font-size: 21px;
+  outline: none; transition: border 0.2s;
+}
+.search-input:focus { border-color: var(--primary); }
+
+/* 下部ボタン */
 .bottom-buttons {
-  padding: 12px 15px;
-  display: flex; gap: 9px; justify-content: center;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-  flex-shrink: 0;
+  padding: 12px 15px; display: flex; gap: 9px; justify-content: center;
+  border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0;
 }
 .sidebar.collapsed .bottom-buttons { display: none; }
 
@@ -210,44 +224,33 @@ body {
   background: linear-gradient(135deg, var(--primary), var(--accent));
   border: none; color: #fff; font-size: 30px; cursor: pointer;
   box-shadow: 0 3px 16px rgba(108,140,255,0.3);
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
 }
 .fab-sm:hover { transform: scale(1.05); }
 .fab-sm:active { transform: scale(0.93); }
 
 .btn-bot {
   width: 54px; height: 54px; border-radius: 16px;
-  border: 1px solid var(--border); background: var(--surface2);
+  border: 1px solid var(--border); background: var(--editorbg);
   color: var(--text2); font-size: 24px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
 }
 .btn-bot:hover { background: var(--surface3); color: var(--text); }
 .btn-bot:active { transform: scale(0.9); }
 .btn-bot.danger-fab { color: var(--danger); }
 
-/* ===== 空の状態（1.5倍） ===== */
-.empty-state { text-align: center; padding: 60px 24px; color: var(--text2); }
-.empty-state .emoji { font-size: 60px; margin-bottom: 18px; }
-.empty-state p { font-size: 20px; line-height: 1.6; }
-
-/* ===== エディタ ===== */
+/* エディタ */
 .editor-view {
-  flex: 1;
-  display: flex; flex-direction: column;
-  background: var(--bg);
-  min-width: 0;
-  overflow: hidden;
+  flex: 1; display: flex; flex-direction: column;
+  background: var(--editorbg); min-width: 0; overflow: hidden;
 }
-
 .editor-empty {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  color: var(--text3); gap: 16px; padding: 20px;
+  color: var(--text2); gap: 16px; padding: 20px;
 }
 .editor-empty .emoji { font-size: 48px; }
-.editor-empty p { font-size: 14px; text-align: center; line-height: 1.6; }
+.editor-empty p { font-size: 16px; text-align: center; line-height: 1.6; }
 
 .editor-folder-info {
   flex: 1; display: flex; flex-direction: column;
@@ -255,7 +258,7 @@ body {
   color: var(--text2); gap: 12px; padding: 20px;
 }
 .editor-folder-info .folder-big-icon { font-size: 48px; }
-.editor-folder-info .folder-big-name { font-size: 18px; font-weight: 700; color: var(--folder); }
+.editor-folder-info .folder-big-name { font-size: 18px; font-weight: 700; color: var(--text2); }
 .editor-folder-info .folder-big-count { font-size: 13px; color: var(--text3); }
 .editor-folder-actions { display: flex; gap: 8px; margin-top: 8px; }
 .editor-folder-actions button {
@@ -268,22 +271,19 @@ body {
 .editor-folder-actions .btn-folder-delete { border-color: rgba(255,92,106,0.3); color: var(--danger); }
 
 .editor-header {
-  display: flex; align-items: center; padding: 20px 14px; gap: 8px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface); flex-shrink: 0;
+  display: flex; align-items: center; padding: 21px 20px; gap: 8px;
+  border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0;
 }
 .editor-title-input {
-  flex: 1; background: none; border: none; color: var(--text);
-  font-size: 16px; font-weight: 700; outline: none;
+  flex: 1; background: none; border: none; color: var(--text2);
+  font-size: 20px; font-weight: 700; outline: none;
 }
 .editor-title-input::placeholder { color: var(--text2); }
 
-.editor-body {
-  flex: 1; display: flex; flex-direction: column; overflow-y: auto;
-}
+.editor-body { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 .editor-textarea {
   flex: 1; min-height: 150px; background: none; border: none;
-  color: var(--text); font-size: 14px; line-height: 1.7;
+  color: var(--text2); font-size: 16px; line-height: 1.7;
   padding: 14px; resize: none; outline: none; font-family: inherit;
   user-select: text; -webkit-user-select: text;
 }
@@ -291,8 +291,7 @@ body {
 
 /* リンクセクション */
 .links-section {
-  border-top: 1px solid var(--border);
-  padding: 10px 14px 20px; background: var(--surface);
+  border-top: 1px solid var(--border); padding: 10px 14px 20px; background: var(--surface);
 }
 .links-group { margin-bottom: 12px; }
 .links-group:last-child { margin-bottom: 0; }
@@ -300,17 +299,16 @@ body {
   display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
 }
 .links-group-header h3 {
-  font-size: 12px; color: var(--text2); font-weight: 600;
+  font-size: 16px; color: var(--text2); font-weight: 600;
   display: flex; align-items: center; gap: 5px;
 }
-.links-group-header .label-parent { color: var(--warning); }
+.links-group-header .label-parent { color: var(--danger); }
 .links-group-header .label-child { color: var(--primary); }
 
 .btn-add-link {
-  padding: 4px 10px;
-  background: rgba(108,140,255,0.15); color: var(--primary);
+  padding: 4px 10px; background: rgba(108,140,255,0.15); color: var(--primary);
   border: 1px solid rgba(108,140,255,0.3); border-radius: 6px;
-  font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
 }
 .btn-add-link:hover { background: rgba(108,140,255,0.25); }
 
@@ -321,23 +319,22 @@ body {
   border-radius: 8px; cursor: pointer; transition: all 0.2s;
 }
 .linked-memo-item:hover { background: var(--border); }
-.linked-memo-item .lm-title { flex: 1; font-size: 12px; font-weight: 500; }
-.linked-memo-item .lm-icon { font-size: 13px; }
+.linked-memo-item .lm-title { flex: 1; font-size: 16px; font-weight: 500; }
+.linked-memo-item .lm-icon { font-size: 16px; }
 .linked-memo-item .lm-remove {
   width: 24px; height: 24px; border-radius: 6px; border: none;
   background: rgba(255,92,106,0.15); color: var(--danger);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-size: 11px; transition: all 0.2s;
+  font-size: 16px; transition: all 0.2s;
 }
 .linked-memo-item .lm-remove:hover { background: rgba(255,92,106,0.3); }
-.no-links { text-align: center; padding: 10px; color: var(--text3); font-size: 11px; }
+.no-links { text-align: center; padding: 10px; color: var(--text3); font-size: 16px; }
 
 /* パンくず */
 .breadcrumb {
   padding: 5px 14px; display: flex; align-items: center; gap: 3px;
   font-size: 12px; color: var(--text2);
-  overflow-x: auto; white-space: nowrap; scrollbar-width: none;
-  flex-shrink: 0;
+  overflow-x: auto; white-space: nowrap; scrollbar-width: none; flex-shrink: 0;
 }
 .breadcrumb::-webkit-scrollbar { display: none; }
 .breadcrumb span {
@@ -347,9 +344,8 @@ body {
 .breadcrumb span:hover { background: var(--surface2); color: var(--text); }
 .breadcrumb span.current { color: var(--primary); font-weight: 600; }
 .breadcrumb .sep { cursor: default; color: var(--border); }
-.breadcrumb .sep:hover { background: none; }
 
-/* ===== モーダル ===== */
+/* モーダル */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300;
   display: flex; align-items: flex-end; justify-content: center;
@@ -360,8 +356,7 @@ body {
   background: var(--surface); border-radius: 20px 20px 0 0;
   width: 100%; max-width: 500px; max-height: 70vh;
   display: flex; flex-direction: column;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 .modal-overlay.open .modal { transform: translateY(0); }
 .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 10px auto; }
@@ -395,7 +390,7 @@ body {
 .btn-export { background: rgba(108,140,255,0.15); color: var(--primary); }
 .btn-import { background: rgba(78,203,113,0.15); color: var(--success); }
 .btn-import-clipboard { background: rgba(180,142,255,0.15); color: var(--accent); }
-.btn-cancel { background: var(--surface2); color: var(--text2); }
+.btn-cancel { background: var(--editorbg); color: var(--text2); }
 .btn-danger { background: rgba(255,92,106,0.1); color: var(--danger); }
 
 .export-textarea {
@@ -406,13 +401,12 @@ body {
 }
 .modal-input {
   margin: 0 16px 10px; padding: 12px 14px;
-  background: var(--surface2); border: 1px solid var(--border);
+  background: var(--editorbg); border: 1px solid var(--border);
   border-radius: 10px; color: var(--text); font-size: 15px;
   outline: none; width: calc(100% - 32px);
 }
 .modal-input:focus { border-color: var(--primary); }
 
-/* トースト */
 .toast {
   position: fixed; bottom: 80px; left: 50%;
   transform: translateX(-50%) translateY(20px);
@@ -424,62 +418,49 @@ body {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-.empty-state { text-align: center; padding: 40px 16px; color: var(--text2); }
-.empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
-.empty-state p { font-size: 13px; line-height: 1.6; }
+.empty-state { text-align: center; padding: 60px 24px; color: var(--text2); }
+.empty-state .emoji { font-size: 60px; margin-bottom: 18px; }
+.empty-state p { font-size: 20px; line-height: 1.6; }
 
-/* ===========================
-   モバイル：ツールバー常時 + サイドバーorエディタ切替
-   =========================== */
+/* モバイル */
 @media (max-width: 767px) {
-  .app-container {
-    display: flex; height: 100dvh;
-  }
-
-  /* モバイル：サイドバーが開いている時はツールバーを隠す */
+  .app-container { display: flex; height: 100dvh; }
   .toolbar {
     width: var(--toolbar-w); min-width: var(--toolbar-w);
-    flex-shrink: 0;
-    transition: width 0.3s, min-width 0.3s, opacity 0.3s;
+    flex-shrink: 0; transition: width 0.3s, min-width 0.3s, opacity 0.3s;
   }
-  .sidebar:not(.collapsed) ~ .toolbar-placeholder { display: none; }
-
-  /* サイドバー開いてる時：ツールバー幅0 */
   .app-container:has(.sidebar:not(.collapsed)) .toolbar {
     width: 0; min-width: 0; padding: 0; border: none;
     overflow: hidden; opacity: 0; pointer-events: none;
   }
-
-  .sidebar {
-    width: 0; flex: 1;
-    transition: flex 0.3s, width 0.3s;
-  }
-  .sidebar.collapsed {
-    flex: 0; width: 0; min-width: 0; border-right: none;
-    overflow: hidden;
-  }
-  .sidebar:not(.collapsed) {
-    flex: 1; width: auto;
-  }
-  .sidebar:not(.collapsed) ~ .editor-view {
-    flex: 0; width: 0; min-width: 0; overflow: hidden;
-  }
-  .sidebar.collapsed ~ .editor-view {
-    flex: 1;
-  }
+  .sidebar { width: 0; flex: 1; transition: flex 0.3s, width 0.3s; }
+  .sidebar.collapsed { flex: 0; width: 0; min-width: 0; border-right: none; overflow: hidden; }
+  .sidebar:not(.collapsed) { flex: 1; width: auto; }
+  .sidebar:not(.collapsed) ~ .editor-view { flex: 0; width: 0; min-width: 0; overflow: hidden; }
+  .sidebar.collapsed ~ .editor-view { flex: 1; }
 }
 
-/* ===========================
-   PC：3カラム（ツールバー + サイドバー + エディタ）
-   =========================== */
+/* PC */
 @media (min-width: 768px) {
-  .toolbar.pc-hidden {
-    width: 0; min-width: 0; padding: 0; border: none;
-    overflow: hidden; opacity: 0;
-  }
-  .sidebar { width: 320px; min-width: 280px; }
+  .toolbar.pc-hidden { width: 0; min-width: 0; padding: 0; border: none; overflow: hidden; opacity: 0; }
+  .sidebar { width: 420px; min-width: 380px; }
   .sidebar.collapsed { width: 0; min-width: 0; border-right: none; }
+  .sidebar-close-btn { display: flex; }
   .editor-view { flex: 1; }
+  .toolbar {
+    width: 72px;
+    min-width: 72px;
+  }
+  .toolbar-btn {
+    width: 54px;
+    height: 54px;
+    font-size: 32px;
+    border-radius: 16px;
+  }
+  .toolbar-sep {
+    width: 48px;
+    margin: 4px 0;
+  }
 }
 
 ::-webkit-scrollbar { width: 4px; }
@@ -489,8 +470,6 @@ body {
 </head>
 <body>
 <div class="app-container">
-
-  <!-- ツールバー（常時表示） -->
   <div class="toolbar" id="toolbar">
     <button class="toolbar-btn" onclick="toggleSidebar()" title="サイドバー開閉">☰</button>
     <div class="toolbar-sep"></div>
@@ -499,29 +478,31 @@ body {
     <button class="toolbar-btn danger" onclick="deleteCurrent()" title="削除">🗑</button>
     <div class="toolbar-sep"></div>
     <button class="toolbar-btn" onclick="openDataModal()" title="データ管理">💾</button>
+    <div class="toolbar-sep"></div>
+    <button class="toolbar-btn" onclick="openDiceModal()" title="ダイスロール">🎲</button>
   </div>
 
-  <!-- サイドバー -->
   <div class="sidebar" id="sidebar">
-  <div class="header">
-    <h1>📝 LinkMemo</h1>
-  </div>
-  <div class="tree-container" id="treeContainer"></div>
-  <div class="search-bar">
-    <div class="search-wrap">
-      <input type="text" class="search-input" id="searchInput"
-             placeholder="メモを検索..." oninput="renderTree()">
+    <div class="header">
+        <h1>🎲DiceTextManager</h1>
+        <button class="btn-icon sidebar-close-btn" onclick="toggleSidebar()" title="サイドバーを閉じる">✕</button>
+    </div>
+    <div class="tree-container" id="treeContainer"></div>
+    <div class="search-bar">
+      <div class="search-wrap">
+        <input type="text" class="search-input" id="searchInput" placeholder="メモを検索..." oninput="renderTree()">
+      </div>
+    </div>
+    <div class="bottom-buttons">
+      <button class="fab-sm" onclick="createMemo()" title="新規メモ">＋</button>
+      <button class="btn-bot" onclick="createFolder()" title="新規フォルダ">📁</button>
+      <button class="btn-bot" id="tbCopy" onclick="copyCurrentMemo()" title="コピー">📋</button>
+      <button class="btn-bot danger-fab" onclick="deleteCurrent()" title="削除">🗑</button>
+      <button class="btn-bot" onclick="openDataModal()" title="データ管理">💾</button>
+      <button class="btn-bot" onclick="openDiceModal()" title="ダイスロール">🎲</button>
     </div>
   </div>
-  <div class="bottom-buttons" id="bottomButtons">
-    <button class="fab-sm" onclick="createMemo()" title="新規メモ">＋</button>
-    <button class="btn-bot" onclick="createFolder()" title="新規フォルダ">📁</button>
-    <button class="btn-bot danger-fab" onclick="deleteCurrent()" title="削除">🗑</button>
-    <button class="btn-bot" onclick="openDataModal()" title="データ管理">💾</button>
-  </div>
-</div>
 
-  <!-- エディタ -->
   <div class="editor-view" id="editorView">
     <div class="editor-empty" id="editorEmpty">
       <div class="emoji">📝</div>
@@ -540,13 +521,11 @@ body {
     </div>
     <div id="editorContent" style="display:none;">
       <div class="editor-header">
-        <input type="text" class="editor-title-input" id="editorTitle"
-               placeholder="タイトルを入力..." oninput="saveCurrent()">
+        <input type="text" class="editor-title-input" id="editorTitle" placeholder="タイトルを入力..." oninput="saveCurrent()">
       </div>
       <div id="breadcrumb" class="breadcrumb"></div>
       <div class="editor-body">
-        <textarea class="editor-textarea" id="editorText"
-                  placeholder="メモを入力..." oninput="saveCurrent()"></textarea>
+        <textarea class="editor-textarea" id="editorText" placeholder="メモを入力..." oninput="saveCurrent()"></textarea>
         <div class="links-section">
           <div class="links-group">
             <div class="links-group-header">
@@ -567,18 +546,14 @@ body {
   </div>
 </div>
 
-<!-- リンク追加モーダル -->
 <div class="modal-overlay" id="linkModal" onclick="closeLinkModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
     <div class="modal-header">子リンク先を追加</div>
-    <input type="text" class="modal-search" id="linkSearch"
-           placeholder="メモを検索..." oninput="renderLinkList()">
+    <input type="text" class="modal-search" id="linkSearch" placeholder="メモを検索..." oninput="renderLinkList()">
     <div class="modal-list" id="linkList"></div>
   </div>
 </div>
-
-<!-- フォルダ作成モーダル -->
 <div class="modal-overlay modal-center" id="folderModal" onclick="closeFolderModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
@@ -590,8 +565,6 @@ body {
     </div>
   </div>
 </div>
-
-<!-- フォルダ編集モーダル -->
 <div class="modal-overlay modal-center" id="renameFolderModal" onclick="closeRenameFolderModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
@@ -604,8 +577,6 @@ body {
     </div>
   </div>
 </div>
-
-<!-- データ管理モーダル -->
 <div class="modal-overlay modal-center" id="dataModal" onclick="closeDataModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
@@ -618,8 +589,7 @@ body {
       <button class="btn-full btn-cancel" onclick="closeDataModal()">キャンセル</button>
     </div>
     <div id="importArea" style="display:none;">
-      <textarea class="export-textarea" id="importTextarea"
-                placeholder="エクスポートしたデータをここに貼り付け..."></textarea>
+      <textarea class="export-textarea" id="importTextarea" placeholder="エクスポートしたデータをここに貼り付け..."></textarea>
       <div class="modal-actions">
         <button class="btn-full btn-import" onclick="importFromText()">📥 読み込み実行</button>
         <button class="btn-full btn-cancel" onclick="hideImportText()">戻る</button>
@@ -627,119 +597,127 @@ body {
     </div>
   </div>
 </div>
-
+<div class="modal-overlay modal-center" id="diceModal" onclick="closeDiceModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header">🎲 ダイスロール</div>
+    <div style="padding:0 16px 8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <input type="number" class="modal-input" id="diceCount" min="1" max="10" value="1"
+               style="width:80px;margin:0;text-align:center;">
+        <span style="font-size:18px;font-weight:700;color:var(--text2);">個の</span>
+        <input type="number" class="modal-input" id="diceFaces" min="1" max="9999" value="6"
+               style="width:80px;margin:0;text-align:center;">
+        <span style="font-size:18px;font-weight:700;color:var(--text2);">面ダイス</span>
+      </div>
+      <div style="text-align:center;font-size:14px;color:var(--text3);margin-bottom:8px;" id="dicePreview">dice1d6=</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-full btn-export" onclick="rollDice()">🎲 メモに追加</button>
+      <button class="btn-full btn-cancel" onclick="closeDiceModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFileImport(event)">
 
 <script>
-const STORAGE_KEY = 'linkmemo_v2';
-let memos = [], folders = [];
-let currentId = null, selectedFolderId = null;
-let navStack = [], renamingFolderId = null;
-let expandedFolders = new Set();
-let sidebarOpen = true, dragInfo = null;
+const STORAGE_KEY='DiceTextManager';
+let memos=[],folders=[];
+let currentId=null,selectedFolderId=null;
+let navStack=[],renamingFolderId=null;
+let expandedFolders=new Set();
+let sidebarOpen=true;
+let dragInfo=null,ghostEl=null;
+let longPressTimer=null,longPressItem=null;
+let pressStartX=0,pressStartY=0;
+let isDragging=false;
+const LONG_PRESS_MS=300;
+const MOVE_THRESHOLD=8;
 
-function loadData() {
-  try { const r = localStorage.getItem(STORAGE_KEY);
-    if (r) { const d = JSON.parse(r); memos = d.memos||[]; folders = d.folders||[]; }
-  } catch(e) { memos = []; folders = []; }
-  memos.forEach(m => {
-    if (!m.childLinks && m.links) m.childLinks = [...m.links];
-    if (!m.childLinks) m.childLinks = [];
-    if (m.folderId === undefined) m.folderId = null;
-    if (m.order === undefined) m.order = 0;
-  });
-  try { const e = localStorage.getItem(STORAGE_KEY+'_expanded'); if (e) expandedFolders = new Set(JSON.parse(e)); } catch(e) {}
-  try { const s = localStorage.getItem(STORAGE_KEY+'_sidebar'); if (s !== null) sidebarOpen = s === '1'; } catch(e) {}
+function loadData(){
+  try{const r=localStorage.getItem(STORAGE_KEY);
+    if(r){const d=JSON.parse(r);memos=d.memos||[];folders=d.folders||[];}}catch(e){memos=[];folders=[];}
+  memos.forEach(m=>{
+    if(!m.childLinks&&m.links)m.childLinks=[...m.links];
+    if(!m.childLinks)m.childLinks=[];
+    if(m.folderId===undefined)m.folderId=null;
+    if(m.order===undefined)m.order=0;});
+  try{const e=localStorage.getItem(STORAGE_KEY+'_expanded');if(e)expandedFolders=new Set(JSON.parse(e));}catch(e){}
+  try{const s=localStorage.getItem(STORAGE_KEY+'_sidebar');if(s!==null)sidebarOpen=s==='1';}catch(e){}
 }
-function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ memos, folders })); }
-function saveExpanded() { localStorage.setItem(STORAGE_KEY+'_expanded', JSON.stringify([...expandedFolders])); }
-function saveSidebarState() { localStorage.setItem(STORAGE_KEY+'_sidebar', sidebarOpen ? '1' : '0'); }
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify({memos,folders}));}
+function saveExpanded(){localStorage.setItem(STORAGE_KEY+'_expanded',JSON.stringify([...expandedFolders]));}
+function saveSidebarState(){localStorage.setItem(STORAGE_KEY+'_sidebar',sidebarOpen?'1':'0');}
 
-function getMemo(id) { return memos.find(m => m.id === id); }
-function getFolder(id) { return folders.find(f => f.id === id); }
-function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function getParentMemos(mid) { return memos.filter(m => (m.childLinks||[]).includes(mid)); }
-function getSubFolders(pid) { return folders.filter(f => (f.parentId||null) === pid).sort((a,b) => (a.order||0)-(b.order||0)); }
-function getMemosInFolder(fid) { return memos.filter(m => (m.folderId||null) === fid).sort((a,b) => (a.order||0)-(b.order||0)); }
-function countItemsInFolder(fid) { let c = getMemosInFolder(fid).length; getSubFolders(fid).forEach(sf => c += countItemsInFolder(sf.id)); return c; }
-function isDescendant(fid, aid) { let id = fid; while (id) { if (id === aid) return true; const f = getFolder(id); id = f ? (f.parentId||null) : null; } return false; }
-function isMobile() { return window.innerWidth < 768; }
-
-function getTargetFolderId() {
-  if (selectedFolderId) return selectedFolderId;
-  if (currentId) { const m = getMemo(currentId); if (m) return m.folderId || null; }
+function getMemo(id){return memos.find(m=>m.id===id);}
+function getFolder(id){return folders.find(f=>f.id===id);}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function getParentMemos(mid){return memos.filter(m=>(m.childLinks||[]).includes(mid));}
+function getSubFolders(pid){return folders.filter(f=>(f.parentId||null)===pid).sort((a,b)=>(a.order||0)-(b.order||0));}
+function getMemosInFolder(fid){return memos.filter(m=>(m.folderId||null)===fid).sort((a,b)=>(a.order||0)-(b.order||0));}
+function countItemsInFolder(fid){let c=getMemosInFolder(fid).length;getSubFolders(fid).forEach(sf=>c+=countItemsInFolder(sf.id));return c;}
+function isDescendant(fid,aid){let id=fid;while(id){if(id===aid)return true;const f=getFolder(id);id=f?(f.parentId||null):null;}return false;}
+function isMobile(){return window.innerWidth<768;}
+function getTargetFolderId(){
+  if(selectedFolderId)return selectedFolderId;
+  if(currentId){const m=getMemo(currentId);if(m)return m.folderId||null;}
   return null;
 }
+function collectMemosInFolder(fid){let r=[...getMemosInFolder(fid)];getSubFolders(fid).forEach(sf=>{r=r.concat(collectMemosInFolder(sf.id));});return r;}
+function collectSubFolders(fid){let r=[];getSubFolders(fid).forEach(sf=>{r.push(sf);r=r.concat(collectSubFolders(sf.id));});return r;}
 
-// ===== サイドバー =====
-function toggleSidebar() {
-  sidebarOpen = !sidebarOpen;
-  applySidebar();
-  saveSidebarState();
-}
-function applySidebar() {
-  const sb = document.getElementById('sidebar');
-  const tb = document.getElementById('toolbar');
-  if (sidebarOpen) {
-    sb.classList.remove('collapsed');
-  } else {
-    sb.classList.add('collapsed');
-  }
-  // PC: サイドバー開いてる時はツールバーを隠す
-  if (!isMobile()) {
-    if (sidebarOpen) tb.classList.add('pc-hidden');
-    else tb.classList.remove('pc-hidden');
-  }
+function toggleSidebar(){sidebarOpen=!sidebarOpen;applySidebar();saveSidebarState();}
+function applySidebar(){
+  const sb=document.getElementById('sidebar'),tb=document.getElementById('toolbar');
+  if(sidebarOpen)sb.classList.remove('collapsed');else sb.classList.add('collapsed');
+  if(!isMobile()){if(sidebarOpen)tb.classList.add('pc-hidden');else tb.classList.remove('pc-hidden');}
 }
 
-// ===== エディタ切替 =====
-function showEditorEmpty() {
-  document.getElementById('editorEmpty').style.display = 'flex';
-  document.getElementById('editorFolderInfo').style.display = 'none';
-  document.getElementById('editorContent').style.display = 'none';
+function showEditorEmpty(){
+  document.getElementById('editorEmpty').style.display='flex';
+  document.getElementById('editorFolderInfo').style.display='none';
+  document.getElementById('editorContent').style.display='none';
 }
-function showEditorMemo() {
-  document.getElementById('editorEmpty').style.display = 'none';
-  document.getElementById('editorFolderInfo').style.display = 'none';
-  const c = document.getElementById('editorContent');
-  c.style.display = 'flex'; c.style.flexDirection = 'column'; c.style.flex = '1';
+function showEditorMemo(){
+  document.getElementById('editorEmpty').style.display='none';
+  document.getElementById('editorFolderInfo').style.display='none';
+  const c=document.getElementById('editorContent');
+  c.style.display='flex';c.style.flexDirection='column';c.style.flex='1';
 }
-function showEditorFolder(fid) {
-  document.getElementById('editorEmpty').style.display = 'none';
-  const fi = document.getElementById('editorFolderInfo');
-  fi.style.display = 'flex'; fi.style.flex = '1';
-  document.getElementById('editorContent').style.display = 'none';
-  const f = getFolder(fid); if (!f) return;
-  document.getElementById('folderInfoName').textContent = f.name;
-  document.getElementById('folderInfoCount').textContent = `${countItemsInFolder(fid)} アイテム`;
+function showEditorFolder(fid){
+  document.getElementById('editorEmpty').style.display='none';
+  const fi=document.getElementById('editorFolderInfo');
+  fi.style.display='flex';fi.style.flex='1';
+  document.getElementById('editorContent').style.display='none';
+  const f=getFolder(fid);if(!f)return;
+  document.getElementById('folderInfoName').textContent=f.name;
+  document.getElementById('folderInfoCount').textContent=`${countItemsInFolder(fid)} アイテム`;
 }
 
-// ===== ツリー描画 =====
-function renderTree() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const container = document.getElementById('treeContainer');
-  if (q) {
-    const filtered = memos.filter(m => m.title.toLowerCase().includes(q) || m.text.toLowerCase().includes(q)).sort((a,b) => b.updated - a.updated);
-    container.innerHTML = filtered.length === 0
-      ? '<div class="empty-state"><div class="emoji">🔍</div><p>見つかりませんでした</p></div>'
-      : filtered.map(m => renderTreeMemo(m)).join('');
+function renderTree(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const container=document.getElementById('treeContainer');
+  if(q){
+    const filtered=memos.filter(m=>m.title.toLowerCase().includes(q)||m.text.toLowerCase().includes(q)).sort((a,b)=>b.updated-a.updated);
+    container.innerHTML=filtered.length===0
+      ?'<div class="empty-state"><div class="emoji">🔍</div><p>見つかりませんでした</p></div>'
+      :filtered.map(m=>renderTreeMemo(m)).join('');
     return;
   }
-  const html = renderTreeLevel(null);
-  container.innerHTML = html || '<div class="empty-state"><div class="emoji">📂</div><p>＋ でメモを、📁 でフォルダを作成</p></div>';
+  const html=renderTreeLevel(null);
+  container.innerHTML=html||'<div class="empty-state"><div class="emoji">📂</div><p>＋ でメモを、📁 でフォルダを作成</p></div>';
 }
-function renderTreeLevel(parentId) {
-  const subs = getSubFolders(parentId), items = getMemosInFolder(parentId);
-  if (!subs.length && !items.length) return '';
-  let html = '';
-  subs.forEach(f => {
-    const isOpen = expandedFolders.has(f.id), cnt = countItemsInFolder(f.id), isSel = selectedFolderId === f.id;
-    html += `<div class="tree-item" data-type="folder" data-id="${f.id}">
-      <div class="tree-folder-row${isSel?' selected':''}" onclick="selectFolder('${f.id}')">
-        <div class="tree-drag-handle" onmousedown="startDrag(event,this)" ontouchstart="startDrag(event,this)">⠿</div>
-        <div class="tree-toggle ${isOpen?'open':''}" onclick="event.stopPropagation();toggleFolderExpand('${f.id}')">▶</div>
+function renderTreeLevel(parentId){
+  const subs=getSubFolders(parentId),items=getMemosInFolder(parentId);
+  if(!subs.length&&!items.length)return'';
+  let html='';
+  subs.forEach(f=>{
+    const isOpen=expandedFolders.has(f.id),cnt=countItemsInFolder(f.id),isSel=selectedFolderId===f.id;
+    html+=`<div class="tree-item" data-type="folder" data-id="${f.id}">
+      <div class="tree-folder-row${isSel?' selected':''}">
+        <div class="tree-toggle ${isOpen?'open':''}" data-toggle="${f.id}">▶</div>
         <span class="tree-folder-icon">${isOpen?'📂':'📁'}</span>
         <span class="tree-folder-name">${escHtml(f.name)}</span>
         <span class="tree-folder-count">${cnt}</span>
@@ -747,14 +725,13 @@ function renderTreeLevel(parentId) {
       ${isOpen?`<div class="tree-children">${renderTreeLevel(f.id)}</div>`:''}
     </div>`;
   });
-  items.forEach(m => { html += renderTreeMemo(m); });
+  items.forEach(m=>{html+=renderTreeMemo(m);});
   return html;
 }
-function renderTreeMemo(m) {
-  const cC = (m.childLinks||[]).length, pC = getParentMemos(m.id).length, isA = m.id === currentId;
-  return `<div class="tree-item" data-type="memo" data-id="${m.id}">
-    <div class="tree-memo-row${isA?' active':''}" onclick="openMemo('${m.id}')">
-      <div class="tree-drag-handle" onmousedown="startDrag(event,this)" ontouchstart="startDrag(event,this)">⠿</div>
+function renderTreeMemo(m){
+  const cC=(m.childLinks||[]).length,pC=getParentMemos(m.id).length,isA=m.id===currentId;
+  return`<div class="tree-item" data-type="memo" data-id="${m.id}">
+    <div class="tree-memo-row${isA?' active':''}">
       <span class="tree-memo-icon">📄</span>
       <span class="tree-memo-title">${escHtml(m.title)||'無題のメモ'}</span>
       <div class="tree-memo-badges">
@@ -764,361 +741,437 @@ function renderTreeMemo(m) {
     </div>
   </div>`;
 }
-function toggleFolderExpand(fid) {
-  if (expandedFolders.has(fid)) expandedFolders.delete(fid);
-  else expandedFolders.add(fid);
-  saveExpanded(); renderTree();
-}
-function selectFolder(fid) {
-  currentId = null; navStack = []; selectedFolderId = fid;
-  showEditorFolder(fid); renderTree();
-  // モバイル：サイドバーを閉じてエディタを表示
-  if (isMobile()) { sidebarOpen = false; applySidebar(); saveSidebarState(); }
-}
-function renameFolderFromEditor() { if (selectedFolderId) openRenameFolderModal(selectedFolderId); }
-function deleteFolderFromEditor() { if (!selectedFolderId) return; renamingFolderId = selectedFolderId; deleteFolder(); }
 
-// ===== ドラッグ＆ドロップ =====
-function startDrag(e, h) {
-  e.preventDefault(); e.stopPropagation();
-  const ti = h.closest('.tree-item'); if (!ti) return;
-  dragInfo = { el: ti, type: ti.dataset.type, id: ti.dataset.id };
+function toggleFolderExpand(fid){
+  if(expandedFolders.has(fid))expandedFolders.delete(fid);
+  else expandedFolders.add(fid);
+  saveExpanded();renderTree();
+}
+function selectFolder(fid){
+  currentId=null;navStack=[];selectedFolderId=fid;
+  showEditorFolder(fid);renderTree();
+  if(isMobile()){sidebarOpen=false;applySidebar();saveSidebarState();}
+}
+function renameFolderFromEditor(){if(selectedFolderId)openRenameFolderModal(selectedFolderId);}
+function deleteFolderFromEditor(){if(!selectedFolderId)return;renamingFolderId=selectedFolderId;deleteFolder();}
+
+// ===== 長押しドラッグシステム =====
+function getPos(e){return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};}
+function getEndPos(e){return e.changedTouches?{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY}:{x:e.clientX,y:e.clientY};}
+
+function onPointerDown(e){
+  if(isDragging)return;
+  // トグルボタンのクリックは即座に処理
+  const toggle=e.target.closest('[data-toggle]');
+  if(toggle){e.preventDefault();toggleFolderExpand(toggle.dataset.toggle);return;}
+  const ti=e.target.closest('.tree-item');
+  if(!ti)return;
+  const pos=getPos(e);
+  pressStartX=pos.x;pressStartY=pos.y;
+  longPressItem=ti;
+  // 長押しタイマー開始
+  longPressTimer=setTimeout(()=>{
+    if(!longPressItem)return;
+    startDrag(longPressItem,pos.x,pos.y);
+  },LONG_PRESS_MS);
+}
+
+function onPointerMove(e){
+  if(isDragging){
+    e.preventDefault();
+    const pos=getPos(e);
+    moveDrag(pos.x,pos.y);
+    return;
+  }
+  // 長押し判定中に動いたらキャンセル
+  if(longPressTimer){
+    const pos=getPos(e);
+    const dx=Math.abs(pos.x-pressStartX),dy=Math.abs(pos.y-pressStartY);
+    if(dx>MOVE_THRESHOLD||dy>MOVE_THRESHOLD){
+      clearTimeout(longPressTimer);longPressTimer=null;
+      if(longPressItem)longPressItem.classList.remove('long-press-active');
+      longPressItem=null;
+    }
+  }
+}
+
+function onPointerUp(e){
+  // 長押しタイマーをクリア
+  if(longPressTimer){
+    clearTimeout(longPressTimer);longPressTimer=null;
+  }
+  if(longPressItem)longPressItem.classList.remove('long-press-active');
+
+  if(isDragging){
+    const pos=getEndPos(e);
+    endDrag(pos.x,pos.y);
+    return;
+  }
+
+  // 通常クリック処理
+  if(!longPressItem)return;
+  const ti=longPressItem;
+  longPressItem=null;
+  const type=ti.dataset.type,id=ti.dataset.id;
+  if(type==='folder')selectFolder(id);
+  else if(type==='memo')openMemo(id);
+}
+
+function startDrag(ti,x,y){
+  isDragging=true;
+  longPressItem=null;
+  dragInfo={el:ti,type:ti.dataset.type,id:ti.dataset.id};
   ti.classList.add('dragging');
-  if (e.touches) { document.addEventListener('touchmove', onDrag, { passive: false }); document.addEventListener('touchend', onDragEnd); }
-  else { document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', onDragEnd); }
+  ti.classList.remove('long-press-active');
+  ghostEl=document.createElement('div');
+  ghostEl.className='drag-ghost';
+  let icon,label;
+  if(dragInfo.type==='folder'){
+    const f=getFolder(dragInfo.id);icon='📁';label=f?f.name:'フォルダ';
+  }else{
+    const m=getMemo(dragInfo.id);icon='📄';label=m?(m.title||'無題のメモ'):'メモ';
+  }
+  ghostEl.innerHTML=`<span>${icon}</span><span>${escHtml(label)}</span>`;
+  document.body.appendChild(ghostEl);
+  ghostEl.style.left=(x+12)+'px';ghostEl.style.top=(y-20)+'px';
 }
-function onDrag(e) {
-  if (!dragInfo) return; e.preventDefault();
-  const pos = e.touches ? e.touches[0] : e; clearAllDrop();
-  const target = getTreeItemAt(pos.clientX, pos.clientY);
-  if (!target || target === dragInfo.el || dragInfo.el.contains(target)) return;
-  const row = target.querySelector('.tree-folder-row,.tree-memo-row'); if (!row) return;
-  const rect = row.getBoundingClientRect(), zone = (pos.clientY - rect.top) / rect.height;
-  if (target.dataset.type === 'folder') {
-    if (zone < 0.25) target.classList.add('drop-above');
-    else if (zone > 0.75) target.classList.add('drop-below');
+
+function moveDrag(x,y){
+  if(!dragInfo)return;
+  if(ghostEl){ghostEl.style.left=(x+12)+'px';ghostEl.style.top=(y-20)+'px';}
+  clearAllDrop();
+  const target=getTreeItemAt(x,y);
+  if(!target||target===dragInfo.el||dragInfo.el.contains(target))return;
+  const row=target.querySelector('.tree-folder-row,.tree-memo-row');
+  if(!row)return;
+  const rect=row.getBoundingClientRect();
+  const zone=(y-rect.top)/rect.height;
+  if(target.dataset.type==='folder'){
+    if(zone<0.25)target.classList.add('drop-above');
+    else if(zone>0.75)target.classList.add('drop-below');
     else target.classList.add('drop-into');
-  } else { if (zone < 0.5) target.classList.add('drop-above'); else target.classList.add('drop-below'); }
-}
-function onDragEnd(e) {
-  if (!dragInfo) return;
-  const pos = e.changedTouches ? e.changedTouches[0] : e;
-  const target = getTreeItemAt(pos.clientX, pos.clientY);
-  if (target && target !== dragInfo.el && !dragInfo.el.contains(target)) {
-    const row = target.querySelector('.tree-folder-row,.tree-memo-row');
-    if (row) { const rect = row.getBoundingClientRect(); executeDrop(target, (pos.clientY - rect.top) / rect.height); }
+  }else{
+    if(zone<0.5)target.classList.add('drop-above');
+    else target.classList.add('drop-below');
   }
-  dragInfo.el.classList.remove('dragging'); clearAllDrop(); dragInfo = null;
-  document.removeEventListener('touchmove', onDrag); document.removeEventListener('touchend', onDragEnd);
-  document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', onDragEnd);
 }
-function getTreeItemAt(x, y) {
-  for (const item of document.querySelectorAll('.tree-item')) {
-    const row = item.querySelector('.tree-folder-row,.tree-memo-row'); if (!row) continue;
-    const r = row.getBoundingClientRect();
-    if (y >= r.top && y <= r.bottom && x >= r.left && x <= r.right) return item;
-  } return null;
-}
-function clearAllDrop() { document.querySelectorAll('.drop-above,.drop-below,.drop-into').forEach(el => el.classList.remove('drop-above','drop-below','drop-into')); }
-function executeDrop(target, zone) {
-  const sT = dragInfo.type, sI = dragInfo.id, dT = target.dataset.type, dI = target.dataset.id;
-  if (dT === 'folder' && zone >= 0.25 && zone <= 0.75) {
-    if (sT === 'folder' && sI === dI) return;
-    if (sT === 'folder' && isDescendant(dI, sI)) { showToast('子フォルダ内には移動できません'); return; }
-    if (sT === 'memo') { const m = getMemo(sI); if (m) { m.folderId = dI; m.order = getMemosInFolder(dI).length+1; } }
-    else { const f = getFolder(sI); if (f) { f.parentId = dI; f.order = getSubFolders(dI).length+1; } }
-    if (!expandedFolders.has(dI)) { expandedFolders.add(dI); saveExpanded(); }
-    saveData(); renderTree(); showToast('移動しました'); return;
+
+function endDrag(x,y){
+  if(!dragInfo){isDragging=false;return;}
+  const target=getTreeItemAt(x,y);
+  if(target&&target!==dragInfo.el&&!dragInfo.el.contains(target)){
+    const row=target.querySelector('.tree-folder-row,.tree-memo-row');
+    if(row){const rect=row.getBoundingClientRect();executeDrop(target,(y-rect.top)/rect.height);}
   }
-  const ib = dT === 'folder' ? zone < 0.25 : zone < 0.5;
-  let tp = null;
-  if (dT === 'folder') { const df = getFolder(dI); tp = df ? (df.parentId||null) : null; }
-  else { const dm = getMemo(dI); tp = dm ? (dm.folderId||null) : null; }
-  if (sT === 'folder') { const sf = getFolder(sI); if (sf) { if (isDescendant(tp, sI)) { showToast('子フォルダ内には移動できません'); return; } sf.parentId = tp; } }
-  else { const sm = getMemo(sI); if (sm) sm.folderId = tp; }
-  let combined = [...getSubFolders(tp).map(f => ({t:'folder',id:f.id,item:f})), ...getMemosInFolder(tp).map(m => ({t:'memo',id:m.id,item:m}))];
-  const si = combined.findIndex(c => c.t === sT && c.id === sI); let se;
-  if (si !== -1) [se] = combined.splice(si, 1);
-  else se = sT === 'folder' ? {t:'folder',id:sI,item:getFolder(sI)} : {t:'memo',id:sI,item:getMemo(sI)};
-  let di = combined.findIndex(c => c.t === dT && c.id === dI);
-  if (di === -1) combined.push(se); else { if (!ib) di++; combined.splice(di, 0, se); }
-  let fo = 0, mo = 0; combined.forEach(c => { if (c.t === 'folder') c.item.order = ++fo; else c.item.order = ++mo; });
-  saveData(); renderTree();
+  dragInfo.el.classList.remove('dragging');
+  clearAllDrop();
+  if(ghostEl){ghostEl.remove();ghostEl=null;}
+  dragInfo=null;isDragging=false;
 }
+
+function getTreeItemAt(x,y){
+  const els=document.elementsFromPoint(x,y);
+  for(const el of els){
+    const ti=el.closest('.tree-item');
+    if(ti&&dragInfo&&ti!==dragInfo.el&&!dragInfo.el.contains(ti))return ti;
+  }
+  return null;
+}
+
+function clearAllDrop(){
+  document.querySelectorAll('.drop-above,.drop-below,.drop-into').forEach(el=>
+    el.classList.remove('drop-above','drop-below','drop-into'));
+}
+
+function executeDrop(target,zone){
+  const sT=dragInfo.type,sI=dragInfo.id,dT=target.dataset.type,dI=target.dataset.id;
+  if(dT==='folder'&&zone>=0.25&&zone<=0.75){
+    if(sT==='folder'&&sI===dI)return;
+    if(sT==='folder'&&isDescendant(dI,sI)){showToast('子フォルダ内には移動できません');return;}
+    if(sT==='memo'){const m=getMemo(sI);if(m){m.folderId=dI;m.order=getMemosInFolder(dI).length+1;}}
+    else{const f=getFolder(sI);if(f){f.parentId=dI;f.order=getSubFolders(dI).length+1;}}
+    if(!expandedFolders.has(dI)){expandedFolders.add(dI);saveExpanded();}
+    saveData();renderTree();showToast('移動しました');return;
+  }
+  const ib=dT==='folder'?zone<0.25:zone<0.5;
+  let tp=null;
+  if(dT==='folder'){const df=getFolder(dI);tp=df?(df.parentId||null):null;}
+  else{const dm=getMemo(dI);tp=dm?(dm.folderId||null):null;}
+  if(sT==='folder'){const sf=getFolder(sI);if(sf){if(isDescendant(tp,sI)){showToast('子フォルダ内には移動できません');return;}sf.parentId=tp;}}
+  else{const sm=getMemo(sI);if(sm)sm.folderId=tp;}
+  let combined=[...getSubFolders(tp).map(f=>({t:'folder',id:f.id,item:f})),...getMemosInFolder(tp).map(m=>({t:'memo',id:m.id,item:m}))];
+  const si=combined.findIndex(c=>c.t===sT&&c.id===sI);let se;
+  if(si!==-1)[se]=combined.splice(si,1);
+  else se=sT==='folder'?{t:'folder',id:sI,item:getFolder(sI)}:{t:'memo',id:sI,item:getMemo(sI)};
+  let di=combined.findIndex(c=>c.t===dT&&c.id===dI);
+  if(di===-1)combined.push(se);else{if(!ib)di++;combined.splice(di,0,se);}
+  let fo=0,mo=0;combined.forEach(c=>{if(c.t==='folder')c.item.order=++fo;else c.item.order=++mo;});
+  saveData();renderTree();
+}
+
+// イベント登録
+document.addEventListener('mousedown',onPointerDown);
+document.addEventListener('mousemove',onPointerMove);
+document.addEventListener('mouseup',onPointerUp);
+document.addEventListener('touchstart',onPointerDown,{passive:false});
+document.addEventListener('touchmove',onPointerMove,{passive:false});
+document.addEventListener('touchend',onPointerUp);
 
 // ===== フォルダ =====
-function createFolder() {
+function createFolder(){
   document.getElementById('folderModal').classList.add('open');
-  document.getElementById('folderNameInput').value = '';
-  setTimeout(() => document.getElementById('folderNameInput').focus(), 300);
+  document.getElementById('folderNameInput').value='';
+  setTimeout(()=>document.getElementById('folderNameInput').focus(),300);
 }
-function closeFolderModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('folderModal').classList.remove('open'); }
-function confirmCreateFolder() {
-  const name = document.getElementById('folderNameInput').value.trim();
-  if (!name) { showToast('フォルダ名を入力してください'); return; }
-  const pid = getTargetFolderId(), mx = getSubFolders(pid).reduce((m,f) => Math.max(m,f.order||0), 0);
-  folders.push({ id: genId(), name, parentId: pid, order: mx+1 });
-  if (pid && !expandedFolders.has(pid)) { expandedFolders.add(pid); saveExpanded(); }
-  saveData(); closeFolderModal(); renderTree();
+function closeFolderModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('folderModal').classList.remove('open');}
+function confirmCreateFolder(){
+  const name=document.getElementById('folderNameInput').value.trim();
+  if(!name){showToast('フォルダ名を入力してください');return;}
+  const pid=getTargetFolderId(),mx=getSubFolders(pid).reduce((m,f)=>Math.max(m,f.order||0),0);
+  folders.push({id:genId(),name,parentId:pid,order:mx+1});
+  if(pid&&!expandedFolders.has(pid)){expandedFolders.add(pid);saveExpanded();}
+  saveData();closeFolderModal();renderTree();
   showToast(`フォルダ「${name}」を作成しました`);
 }
-function openRenameFolderModal(fid) {
-  renamingFolderId = fid; const f = getFolder(fid); if (!f) return;
-  document.getElementById('renameFolderInput').value = f.name;
+function openRenameFolderModal(fid){
+  renamingFolderId=fid;const f=getFolder(fid);if(!f)return;
+  document.getElementById('renameFolderInput').value=f.name;
   document.getElementById('renameFolderModal').classList.add('open');
-  setTimeout(() => document.getElementById('renameFolderInput').focus(), 300);
+  setTimeout(()=>document.getElementById('renameFolderInput').focus(),300);
 }
-function closeRenameFolderModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('renameFolderModal').classList.remove('open'); renamingFolderId = null; }
-function confirmRenameFolder() {
-  const name = document.getElementById('renameFolderInput').value.trim();
-  if (!name) { showToast('フォルダ名を入力してください'); return; }
-  const f = getFolder(renamingFolderId); if (f) { f.name = name; saveData(); }
-  closeRenameFolderModal(); renderTree();
-  if (selectedFolderId === renamingFolderId) showEditorFolder(selectedFolderId);
+function closeRenameFolderModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('renameFolderModal').classList.remove('open');renamingFolderId=null;}
+function confirmRenameFolder(){
+  const name=document.getElementById('renameFolderInput').value.trim();
+  if(!name){showToast('フォルダ名を入力してください');return;}
+  const f=getFolder(renamingFolderId);if(f){f.name=name;saveData();}
+  closeRenameFolderModal();renderTree();
+  if(selectedFolderId===renamingFolderId)showEditorFolder(selectedFolderId);
 }
-function deleteFolder() {
-  if (!renamingFolderId) return;
-  const f = getFolder(renamingFolderId); if (!f) return;
-  const allMemos = collectMemosInFolder(renamingFolderId);
-  const allFolders = collectSubFolders(renamingFolderId);
-
-  if (!confirm(`フォルダ「${f.name}」を削除しますか？\n中のフォルダ(${allFolders.length}件)とメモ(${allMemos.length}件)も全て削除されます。`)) return;
-
-  const memoIds = new Set(allMemos.map(m => m.id));
-  memos.forEach(m => {
-    m.childLinks = (m.childLinks||[]).filter(l => !memoIds.has(l));
-  });
-  memos = memos.filter(m => !memoIds.has(m.id));
-
-  const folderIds = new Set([renamingFolderId, ...allFolders.map(sf => sf.id)]);
-  folders = folders.filter(x => !folderIds.has(x.id));
-
-  if (currentId && memoIds.has(currentId)) { currentId = null; navStack = []; }
-  if (selectedFolderId && folderIds.has(selectedFolderId)) { selectedFolderId = null; }
-
-  saveData(); closeRenameFolderModal(); showEditorEmpty(); renderTree();
+function deleteFolder(){
+  if(!renamingFolderId)return;
+  const f=getFolder(renamingFolderId);if(!f)return;
+  const allMemos=collectMemosInFolder(renamingFolderId);
+  const allFolders=collectSubFolders(renamingFolderId);
+  if(!confirm(`フォルダ「${f.name}」を削除しますか？\n中のフォルダ(${allFolders.length}件)とメモ(${allMemos.length}件)も全て削除されます。`))return;
+  const memoIds=new Set(allMemos.map(m=>m.id));
+  memos.forEach(m=>{m.childLinks=(m.childLinks||[]).filter(l=>!memoIds.has(l));});
+  memos=memos.filter(m=>!memoIds.has(m.id));
+  const folderIds=new Set([renamingFolderId,...allFolders.map(sf=>sf.id)]);
+  folders=folders.filter(x=>!folderIds.has(x.id));
+  if(currentId&&memoIds.has(currentId)){currentId=null;navStack=[];}
+  if(selectedFolderId&&folderIds.has(selectedFolderId)){selectedFolderId=null;}
+  saveData();closeRenameFolderModal();showEditorEmpty();renderTree();
   showToast('フォルダと中身を削除しました');
 }
 
 // ===== メモ =====
-function createMemo() {
-  const tf = getTargetFolderId(), mx = getMemosInFolder(tf).reduce((m,x) => Math.max(m,x.order||0), 0);
-  const memo = { id: genId(), title: '', text: '', childLinks: [], folderId: tf, order: mx+1, created: Date.now(), updated: Date.now() };
-  memos.push(memo); saveData(); navStack = [];
-  if (tf && !expandedFolders.has(tf)) { expandedFolders.add(tf); saveExpanded(); }
+function createMemo(){
+  const tf=getTargetFolderId(),mx=getMemosInFolder(tf).reduce((m,x)=>Math.max(m,x.order||0),0);
+  const memo={id:genId(),title:'',text:'',childLinks:[],folderId:tf,order:mx+1,created:Date.now(),updated:Date.now()};
+  memos.push(memo);saveData();navStack=[];
+  if(tf&&!expandedFolders.has(tf)){expandedFolders.add(tf);saveExpanded();}
   openMemo(memo.id);
 }
-function openMemo(id, pushToStack = true) {
-  if (pushToStack && currentId && currentId !== id) navStack.push(currentId);
-  currentId = id; selectedFolderId = null;
-  const memo = getMemo(id); if (!memo) return;
+function openMemo(id,pushToStack=true){
+  if(pushToStack&&currentId&&currentId!==id)navStack.push(currentId);
+  currentId=id;selectedFolderId=null;
+  const memo=getMemo(id);if(!memo)return;
   showEditorMemo();
-  document.getElementById('editorTitle').value = memo.title;
-  document.getElementById('editorText').value = memo.text;
-  renderLinks(); renderBreadcrumb(); renderTree();
-  // モバイル：サイドバーを閉じてエディタを表示
-  if (isMobile()) { sidebarOpen = false; applySidebar(); saveSidebarState(); }
+  document.getElementById('editorTitle').value=memo.title;
+  document.getElementById('editorText').value=memo.text;
+  renderLinks();renderBreadcrumb();renderTree();
+  if(isMobile()){sidebarOpen=false;applySidebar();saveSidebarState();}
 }
-function saveCurrent() {
-  if (!currentId) return;
-  const memo = getMemo(currentId); if (!memo) return;
-  memo.title = document.getElementById('editorTitle').value;
-  memo.text = document.getElementById('editorText').value;
-  memo.updated = Date.now(); saveData(); renderTree();
+function saveCurrent(){
+  if(!currentId)return;
+  const memo=getMemo(currentId);if(!memo)return;
+  memo.title=document.getElementById('editorTitle').value;
+  memo.text=document.getElementById('editorText').value;
+  memo.updated=Date.now();saveData();renderTree();
 }
-
-/** フォルダ内の全メモを再帰的に収集 */
-function collectMemosInFolder(folderId) {
-  let result = [...getMemosInFolder(folderId)];
-  getSubFolders(folderId).forEach(sf => {
-    result = result.concat(collectMemosInFolder(sf.id));
-  });
-  return result;
-}
-
-/** フォルダ内の全サブフォルダを再帰的に収集 */
-function collectSubFolders(folderId) {
-  let result = [];
-  getSubFolders(folderId).forEach(sf => {
-    result.push(sf);
-    result = result.concat(collectSubFolders(sf.id));
-  });
-  return result;
-}
-
-// ===== 削除 =====
-function deleteCurrent() {
-  // メモが選択されている場合
-  if (currentId) {
-    if (!confirm('このメモを削除しますか？')) return;
-    const id = currentId;
-    memos.forEach(m => { m.childLinks = (m.childLinks||[]).filter(l => l !== id); });
-    memos = memos.filter(m => m.id !== id);
-    saveData(); currentId = null; navStack = [];
-    showEditorEmpty(); renderTree();
-    showToast('メモを削除しました');
-    return;
+function deleteCurrent(){
+  if(currentId){
+    if(!confirm('このメモを削除しますか？'))return;
+    const id=currentId;
+    memos.forEach(m=>{m.childLinks=(m.childLinks||[]).filter(l=>l!==id);});
+    memos=memos.filter(m=>m.id!==id);
+    saveData();currentId=null;navStack=[];
+    showEditorEmpty();renderTree();showToast('メモを削除しました');return;
   }
-
-  // フォルダが選択されている場合
-  if (selectedFolderId) {
-    const f = getFolder(selectedFolderId);
-    if (!f) return;
-    const allMemos = collectMemosInFolder(selectedFolderId);
-    const allFolders = collectSubFolders(selectedFolderId);
-    const totalItems = allMemos.length + allFolders.length;
-
-    if (!confirm(`フォルダ「${f.name}」を削除しますか？\n中のフォルダ(${allFolders.length}件)とメモ(${allMemos.length}件)も全て削除されます。`)) return;
-
-    // 削除対象のメモIDセット
-    const memoIds = new Set(allMemos.map(m => m.id));
-    // 他のメモのchildLinksから削除対象を除去
-    memos.forEach(m => {
-      m.childLinks = (m.childLinks||[]).filter(l => !memoIds.has(l));
-    });
-    // メモを削除
-    memos = memos.filter(m => !memoIds.has(m.id));
-
-    // フォルダを削除（自身含む）
-    const folderIds = new Set([selectedFolderId, ...allFolders.map(f => f.id)]);
-    folders = folders.filter(f => !folderIds.has(f.id));
-
-    // 編集中のメモが削除対象だった場合
-    if (currentId && memoIds.has(currentId)) {
-      currentId = null; navStack = [];
-    }
-
-    selectedFolderId = null;
-    saveData(); showEditorEmpty(); renderTree();
-    showToast(`フォルダと中身(${totalItems}件)を削除しました`);
-    return;
+  if(selectedFolderId){
+    const f=getFolder(selectedFolderId);if(!f)return;
+    const allMemos=collectMemosInFolder(selectedFolderId);
+    const allFolders=collectSubFolders(selectedFolderId);
+    if(!confirm(`フォルダ「${f.name}」を削除しますか？\n中のフォルダ(${allFolders.length}件)とメモ(${allMemos.length}件)も全て削除されます。`))return;
+    const memoIds=new Set(allMemos.map(m=>m.id));
+    memos.forEach(m=>{m.childLinks=(m.childLinks||[]).filter(l=>!memoIds.has(l));});
+    memos=memos.filter(m=>!memoIds.has(m.id));
+    const folderIds=new Set([selectedFolderId,...allFolders.map(sf=>sf.id)]);
+    folders=folders.filter(x=>!folderIds.has(x.id));
+    selectedFolderId=null;
+    saveData();showEditorEmpty();renderTree();showToast('フォルダと中身を削除しました');return;
   }
-
   showToast('削除する対象がありません');
 }
 
-// ===== コピー =====
-function copyCurrentMemo() {
-  if (!currentId) { showToast('コピーするメモがありません'); return; }
-  const memo = getMemo(currentId); if (!memo) return;
-  const content = (memo.title||'無題のメモ') + '\n\n' + (memo.text||'');
-  navigator.clipboard.writeText(content).then(() => onCopySuccess())
-  .catch(() => { const ta = document.createElement('textarea'); ta.value = content; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); onCopySuccess(); });
+function openDiceModal() {
+  if (!currentId) { showToast('メモを開いてください'); return; }
+  document.getElementById('diceModal').classList.add('open');
+  document.getElementById('diceCount').value = 1;
+  document.getElementById('diceFaces').value = 6;
+  updateDicePreview();
+  document.getElementById('diceCount').addEventListener('input', updateDicePreview);
+  document.getElementById('diceFaces').addEventListener('input', updateDicePreview);
 }
-function onCopySuccess() {
-  const btn = document.getElementById('tbCopy');
-  if (btn) {
-    btn.classList.add('copied'); btn.textContent = '✓';
-    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋'; }, 1500);
-  }
+
+function closeDiceModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('diceModal').classList.remove('open');
+}
+
+function updateDicePreview() {
+  let a = parseInt(document.getElementById('diceCount').value) || 1;
+  let b = parseInt(document.getElementById('diceFaces').value) || 6;
+  if (a < 1) a = 1; else if (a > 10) a = 10;
+  if (b < 1) b = 1; else if (b > 9999) b = 9999;
+  document.getElementById('dicePreview').textContent = `dice${a}d${b}=`;
+}
+
+function rollDice() {
+  if (!currentId) { showToast('メモを開いてください'); return; }
+  let a = parseInt(document.getElementById('diceCount').value) || 1;
+  let b = parseInt(document.getElementById('diceFaces').value) || 6;
+
+  if (a < 1) a = 1; else if (a > 10) a = 10;
+  if (b < 1) b = 1; else if (b > 9999) b = 9999;
+
+  const text = `dice${a}d${b}=`;
+
+  const ta = document.getElementById('editorText');
+  const pos = ta.selectionStart;
+  const before = ta.value.substring(0, pos);
+  const after = ta.value.substring(pos);
+  const insert = text;
+  ta.value = before + insert + after;
+  ta.selectionStart = ta.selectionEnd = pos + insert.length;
+
+  saveCurrent();
+  closeDiceModal();
+  showToast(`${text} を追加しました`);
+}
+
+function copyCurrentMemo(){
+  if(!currentId){showToast('コピーするメモがありません');return;}
+  const memo=getMemo(currentId);if(!memo)return;
+  const content=(memo.text||'');
+  navigator.clipboard.writeText(content).then(()=>onCopySuccess())
+  .catch(()=>{const ta=document.createElement('textarea');ta.value=content;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);onCopySuccess();});
+}
+function onCopySuccess(){
+  const btn=document.getElementById('tbCopy');
+  if(btn){btn.classList.add('copied');btn.textContent='✓';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋';},1500);}
   showToast('コピーしました');
 }
 
-// ===== リンク =====
-function renderLinks() {
-  const memo = getMemo(currentId); if (!memo) return;
-  const parents = getParentMemos(currentId);
-  document.getElementById('parentLinks').innerHTML = parents.length === 0
-    ? '<div class="no-links">親リンクなし</div>'
-    : parents.map(p => `<div class="linked-memo-item" onclick="navigateToLink('${p.id}')"><span class="lm-icon" style="color:var(--warning)">⬆</span><span class="lm-title">${escHtml(p.title||'無題のメモ')}</span></div>`).join('');
-  const children = (memo.childLinks||[]).map(id => getMemo(id)).filter(Boolean);
-  document.getElementById('childLinks').innerHTML = children.length === 0
-    ? '<div class="no-links">子リンクなし</div>'
-    : children.map(c => `<div class="linked-memo-item"><span class="lm-icon" style="color:var(--primary)">⬇</span><span class="lm-title" onclick="navigateToLink('${c.id}')">${escHtml(c.title||'無題のメモ')}</span><button class="lm-remove" onclick="event.stopPropagation();removeChildLink('${c.id}')">✕</button></div>`).join('');
+function renderLinks(){
+  const memo=getMemo(currentId);if(!memo)return;
+  const parents=getParentMemos(currentId);
+  document.getElementById('parentLinks').innerHTML=parents.length===0
+    ?'<div class="no-links">親リンクなし</div>'
+    :parents.map(p=>`<div class="linked-memo-item" onclick="navigateToLink('${p.id}')"><span class="lm-icon" style="color:var(--danger)">⬆</span><span class="lm-title">${escHtml(p.title||'無題のメモ')}</span></div>`).join('');
+  const children=(memo.childLinks||[]).map(id=>getMemo(id)).filter(Boolean);
+  document.getElementById('childLinks').innerHTML=children.length===0
+    ?'<div class="no-links">子リンクなし</div>'
+    :children.map(c=>`<div class="linked-memo-item"><span class="lm-icon" style="color:var(--primary)">⬇</span><span class="lm-title" onclick="navigateToLink('${c.id}')">${escHtml(c.title||'無題のメモ')}</span><button class="lm-remove" onclick="event.stopPropagation();removeChildLink('${c.id}')">✕</button></div>`).join('');
 }
-function navigateToLink(id) { openMemo(id, true); }
-function removeChildLink(lid) { const memo = getMemo(currentId); if (!memo) return; memo.childLinks = (memo.childLinks||[]).filter(l => l !== lid); saveData(); renderLinks(); renderTree(); }
+function navigateToLink(id){openMemo(id,true);}
+function removeChildLink(lid){const memo=getMemo(currentId);if(!memo)return;memo.childLinks=(memo.childLinks||[]).filter(l=>l!==lid);saveData();renderLinks();renderTree();}
 
-// ===== パンくず =====
-function renderBreadcrumb() {
-  const bc = document.getElementById('breadcrumb');
-  if (navStack.length === 0) { bc.innerHTML = ''; return; }
-  let html = '';
-  navStack.forEach((id, i) => { const m = getMemo(id); if (!m) return; html += `<span onclick="goBackTo(${i})">${escHtml(m.title||'無題')}</span><span class="sep">›</span>`; });
-  const cur = getMemo(currentId);
-  if (cur) html += `<span class="current">${escHtml(cur.title||'無題')}</span>`;
-  bc.innerHTML = html; bc.scrollLeft = bc.scrollWidth;
+function renderBreadcrumb(){
+  const bc=document.getElementById('breadcrumb');
+  if(navStack.length===0){bc.innerHTML='';return;}
+  let html='';
+  navStack.forEach((id,i)=>{const m=getMemo(id);if(!m)return;html+=`<span onclick="goBackTo(${i})">${escHtml(m.title||'無題')}</span><span class="sep">›</span>`;});
+  const cur=getMemo(currentId);
+  if(cur)html+=`<span class="current">${escHtml(cur.title||'無題')}</span>`;
+  bc.innerHTML=html;bc.scrollLeft=bc.scrollWidth;
 }
-function goBackTo(i) { const id = navStack[i]; navStack = navStack.slice(0, i); openMemo(id, false); }
+function goBackTo(i){const id=navStack[i];navStack=navStack.slice(0,i);openMemo(id,false);}
 
-// ===== リンクモーダル =====
-function openLinkModal() {
+function openLinkModal(){
   document.getElementById('linkModal').classList.add('open');
-  document.getElementById('linkSearch').value = ''; renderLinkList();
-  setTimeout(() => document.getElementById('linkSearch').focus(), 300);
+  document.getElementById('linkSearch').value='';renderLinkList();
+  setTimeout(()=>document.getElementById('linkSearch').focus(),300);
 }
-function closeLinkModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('linkModal').classList.remove('open'); }
-function renderLinkList() {
-  const memo = getMemo(currentId); if (!memo) return;
-  const q = document.getElementById('linkSearch').value.toLowerCase();
-  let av = memos.filter(m => m.id !== currentId);
-  if (q) av = av.filter(m => m.title.toLowerCase().includes(q) || m.text.toLowerCase().includes(q));
-  av.sort((a,b) => b.updated - a.updated);
-  const cc = new Set(memo.childLinks||[]);
-  document.getElementById('linkList').innerHTML = av.map(m => {
-    if (cc.has(m.id)) return `<div class="modal-item already-linked"><span class="mi-icon">🔗</span><span class="mi-title">${escHtml(m.title||'無題のメモ')}</span><span class="mi-status">追加済み</span></div>`;
-    return `<div class="modal-item" onclick="addChildLink('${m.id}')"><span class="mi-icon">📄</span><span class="mi-title">${escHtml(m.title||'無題のメモ')}</span></div>`;
-  }).join('') || '<div class="no-links">他のメモがありません</div>';
+function closeLinkModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('linkModal').classList.remove('open');}
+function renderLinkList(){
+  const memo=getMemo(currentId);if(!memo)return;
+  const q=document.getElementById('linkSearch').value.toLowerCase();
+  let av=memos.filter(m=>m.id!==currentId);
+  if(q)av=av.filter(m=>m.title.toLowerCase().includes(q)||m.text.toLowerCase().includes(q));
+  av.sort((a,b)=>b.updated-a.updated);
+  const cc=new Set(memo.childLinks||[]);
+  document.getElementById('linkList').innerHTML=av.map(m=>{
+    if(cc.has(m.id))return`<div class="modal-item already-linked"><span class="mi-icon">🔗</span><span class="mi-title">${escHtml(m.title||'無題のメモ')}</span><span class="mi-status">追加済み</span></div>`;
+    return`<div class="modal-item" onclick="addChildLink('${m.id}')"><span class="mi-icon">📄</span><span class="mi-title">${escHtml(m.title||'無題のメモ')}</span></div>`;
+  }).join('')||'<div class="no-links">他のメモがありません</div>';
 }
-function addChildLink(lid) {
-  const memo = getMemo(currentId); if (!memo) return;
-  if (!memo.childLinks) memo.childLinks = [];
-  if (memo.childLinks.includes(lid)) return;
-  memo.childLinks.push(lid); memo.updated = Date.now();
-  saveData(); renderLinkList(); renderLinks(); renderTree();
-  const o = getMemo(lid); showToast(`「${o?.title||'無題'}」を子リンクに追加`);
+function addChildLink(lid){
+  const memo=getMemo(currentId);if(!memo)return;
+  if(!memo.childLinks)memo.childLinks=[];
+  if(memo.childLinks.includes(lid))return;
+  memo.childLinks.push(lid);memo.updated=Date.now();
+  saveData();renderLinkList();renderLinks();renderTree();
+  const o=getMemo(lid);showToast(`「${o?.title||'無題'}」を子リンクに追加`);
 }
 
-// ===== データ管理 =====
-function openDataModal() {
+function openDataModal(){
   document.getElementById('dataModal').classList.add('open');
-  document.getElementById('dataActions').style.display = '';
-  document.getElementById('importArea').style.display = 'none';
+  document.getElementById('dataActions').style.display='';
+  document.getElementById('importArea').style.display='none';
 }
-function closeDataModal(e) { if (e && e.target !== e.currentTarget) return; document.getElementById('dataModal').classList.remove('open'); }
-function exportData() {
-  const json = JSON.stringify({ memos, folders }, null, 2);
-  navigator.clipboard.writeText(json).then(() => { showToast('クリップボードにコピーしました'); closeDataModal(); })
-  .catch(() => { const ta = document.createElement('textarea'); ta.value = json; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('クリップボードにコピーしました'); closeDataModal(); });
+function closeDataModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('dataModal').classList.remove('open');}
+function exportData(){
+  const json=JSON.stringify({memos,folders},null,2);
+  navigator.clipboard.writeText(json).then(()=>{showToast('クリップボードにコピーしました');closeDataModal();})
+  .catch(()=>{const ta=document.createElement('textarea');ta.value=json;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('クリップボードにコピーしました');closeDataModal();});
 }
-function exportFile() {
-  const json = JSON.stringify({ memos, folders }, null, 2);
-  const blob = new Blob([json], {type:'application/json'}); const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `linkmemo_backup_${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url); showToast('ファイルに保存しました'); closeDataModal();
+function exportFile(){
+  const json=JSON.stringify({memos,folders},null,2);
+  const blob=new Blob([json],{type:'application/json'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`DTM_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(url);showToast('ファイルに保存しました');closeDataModal();
 }
-function showImportText() { document.getElementById('dataActions').style.display = 'none'; document.getElementById('importArea').style.display = ''; document.getElementById('importTextarea').value = ''; }
-function hideImportText() { document.getElementById('dataActions').style.display = ''; document.getElementById('importArea').style.display = 'none'; }
-function doImport(data) {
-  if (Array.isArray(data)) { memos = data; folders = []; }
-  else if (data.memos) { memos = data.memos||[]; folders = data.folders||[]; }
+function showImportText(){document.getElementById('dataActions').style.display='none';document.getElementById('importArea').style.display='';document.getElementById('importTextarea').value='';}
+function hideImportText(){document.getElementById('dataActions').style.display='';document.getElementById('importArea').style.display='none';}
+function doImport(data){
+  if(Array.isArray(data)){memos=data;folders=[];}
+  else if(data.memos){memos=data.memos||[];folders=data.folders||[];}
   else throw new Error();
-  memos.forEach(m => { if (!m.childLinks && m.links) m.childLinks = [...m.links]; if (!m.childLinks) m.childLinks = []; if (m.folderId === undefined) m.folderId = null; if (m.order === undefined) m.order = 0; });
-  saveData(); currentId = null; selectedFolderId = null; navStack = [];
-  showEditorEmpty(); renderTree(); closeDataModal();
+  memos.forEach(m=>{if(!m.childLinks&&m.links)m.childLinks=[...m.links];if(!m.childLinks)m.childLinks=[];if(m.folderId===undefined)m.folderId=null;if(m.order===undefined)m.order=0;});
+  saveData();currentId=null;selectedFolderId=null;navStack=[];
+  showEditorEmpty();renderTree();closeDataModal();
   showToast(`${memos.length}件のメモを読み込みました`);
 }
-function importFromText() {
-  const raw = document.getElementById('importTextarea').value.trim();
-  if (!raw) { showToast('データを貼り付けてください'); return; }
-  try { const data = JSON.parse(raw); const cnt = Array.isArray(data) ? data.length : (data.memos||[]).length;
-    if (!confirm(`${cnt}件を読み込みます。上書きされます。よろしいですか？`)) return; doImport(data);
-  } catch(e) { showToast('データの形式が正しくありません'); }
+function importFromText(){
+  const raw=document.getElementById('importTextarea').value.trim();
+  if(!raw){showToast('データを貼り付けてください');return;}
+  try{const data=JSON.parse(raw);const cnt=Array.isArray(data)?data.length:(data.memos||[]).length;
+    if(!confirm(`${cnt}件を読み込みます。上書きされます。よろしいですか？`))return;doImport(data);
+  }catch(e){showToast('データの形式が正しくありません');}
 }
-function importFile() { document.getElementById('fileInput').click(); }
-function handleFileImport(event) {
-  const file = event.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) { try { const data = JSON.parse(e.target.result); const cnt = Array.isArray(data) ? data.length : (data.memos||[]).length;
-    if (!confirm(`${cnt}件を読み込みます。上書きされます。よろしいですか？`)) return; doImport(data);
-  } catch(err) { showToast('ファイルの形式が正しくありません'); } };
-  reader.readAsText(file); event.target.value = '';
+function importFile(){document.getElementById('fileInput').click();}
+function handleFileImport(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){try{const data=JSON.parse(e.target.result);const cnt=Array.isArray(data)?data.length:(data.memos||[]).length;
+    if(!confirm(`${cnt}件を読み込みます。上書きされます。よろしいですか？`))return;doImport(data);
+  }catch(err){showToast('ファイルの形式が正しくありません');}};
+  reader.readAsText(file);event.target.value='';
 }
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
-
-// ===== 初期化 =====
-loadData(); showEditorEmpty(); applySidebar(); renderTree();
+loadData();showEditorEmpty();applySidebar();renderTree();
 </script>
 </body>
 </html>
