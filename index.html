@@ -422,6 +422,35 @@ body {
 .empty-state .emoji { font-size: 60px; margin-bottom: 18px; }
 .empty-state p { font-size: 20px; line-height: 1.6; }
 
+/* ダイス */
+.dice-set-btn {
+  padding: 8px 14px;
+  background: rgba(108,140,255,0.1);
+  border: 1px solid rgba(108,140,255,0.3);
+  border-radius: 8px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dice-set-btn:hover {
+  background: rgba(108,140,255,0.2);
+}
+.dice-set-btn .remove-set {
+  font-size: 11px;
+  color: var(--danger);
+  margin-left: 4px;
+  opacity: 0.7;
+}
+.dice-set-btn .remove-set:hover {
+  opacity: 1;
+}
+
 /* モバイル */
 @media (max-width: 767px) {
   .app-container { display: flex; height: 100dvh; }
@@ -528,11 +557,12 @@ body {
         <textarea class="editor-textarea" id="editorText" placeholder="メモを入力..." oninput="saveCurrent()"></textarea>
         <div class="links-section">
           <div class="links-group">
-            <div class="links-group-header">
-              <h3><span class="label-parent">⬆ 親リンク</span></h3>
-            </div>
-            <div class="linked-memos" id="parentLinks"></div>
-          </div>
+  <div class="links-group-header">
+    <h3><span class="label-parent">⬆ 親リンク</span>（このメモがリンクされた先）</h3>
+    <button class="btn-add-link" onclick="openParentLinkModal()">＋ 追加</button>
+  </div>
+  <div class="linked-memos" id="parentLinks"></div>
+</div>
           <div class="links-group">
             <div class="links-group-header">
               <h3><span class="label-child">⬇ 子リンク</span></h3>
@@ -552,6 +582,14 @@ body {
     <div class="modal-header">子リンク先を追加</div>
     <input type="text" class="modal-search" id="linkSearch" placeholder="メモを検索..." oninput="renderLinkList()">
     <div class="modal-list" id="linkList"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="parentLinkModal" onclick="closeParentLinkModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header">親リンク先を追加</div>
+    <input type="text" class="modal-search" id="parentLinkSearch" placeholder="メモを検索..." oninput="renderParentLinkList()">
+    <div class="modal-list" id="parentLinkList"></div>
   </div>
 </div>
 <div class="modal-overlay modal-center" id="folderModal" onclick="closeFolderModal(event)">
@@ -601,19 +639,27 @@ body {
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
     <div class="modal-header">🎲 ダイスロール</div>
-    <div style="padding:0 16px 8px;">
+    
+    <!-- 保存済みダイスセット -->
+    <div style="padding:0 16px 12px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;">保存済みセット</div>
+      <div id="diceSets" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    
+    <div style="border-top:1px solid var(--border);padding:12px 16px 8px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <input type="number" class="modal-input" id="diceCount" min="1" max="10" value="1"
+        <input type="number" class="modal-input" id="diceCount" min="1" value="1"
                style="width:80px;margin:0;text-align:center;">
         <span style="font-size:18px;font-weight:700;color:var(--text2);">個の</span>
-        <input type="number" class="modal-input" id="diceFaces" min="1" max="9999" value="6"
+        <input type="number" class="modal-input" id="diceFaces" min="2" value="6"
                style="width:80px;margin:0;text-align:center;">
         <span style="font-size:18px;font-weight:700;color:var(--text2);">面ダイス</span>
       </div>
       <div style="text-align:center;font-size:14px;color:var(--text3);margin-bottom:8px;" id="dicePreview">dice1d6=</div>
     </div>
     <div class="modal-actions">
-      <button class="btn-full btn-export" onclick="rollDice()">🎲 メモに追加</button>
+      <button class="btn-full btn-export" onclick="rollDice()">🎲 ロールしてメモに追加</button>
+      <button class="btn-full btn-import-clipboard" onclick="saveDiceSet()">💾 このセットを保存 (最大5個)</button>
       <button class="btn-full btn-cancel" onclick="closeDiceModal()">キャンセル</button>
     </div>
   </div>
@@ -1017,11 +1063,23 @@ function deleteCurrent(){
 function openDiceModal() {
   if (!currentId) { showToast('メモを開いてください'); return; }
   document.getElementById('diceModal').classList.add('open');
-  document.getElementById('diceCount').value = 1;
-  document.getElementById('diceFaces').value = 6;
+  
+  const lastCount = localStorage.getItem('dice_last_count');
+  const lastFaces = localStorage.getItem('dice_last_faces');
+  
+  const countInput = document.getElementById('diceCount');
+  const facesInput = document.getElementById('diceFaces');
+  
+  countInput.value = lastCount || 1;
+  facesInput.value = lastFaces || 6;
+  
   updateDicePreview();
-  document.getElementById('diceCount').addEventListener('input', updateDicePreview);
-  document.getElementById('diceFaces').addEventListener('input', updateDicePreview);
+  renderDiceSets();
+  
+  countInput.removeEventListener('input', updateDicePreview);
+  facesInput.removeEventListener('input', updateDicePreview);
+  countInput.addEventListener('input', updateDicePreview);
+  facesInput.addEventListener('input', updateDicePreview);
 }
 
 function closeDiceModal(e) {
@@ -1048,16 +1106,102 @@ function rollDice() {
   const text = `dice${a}d${b}=`;
 
   const ta = document.getElementById('editorText');
-  const pos = ta.selectionStart;
+  
+  // カーソル位置を取得、0の場合（未フォーカス）のみ末尾に追加
+  let pos = ta.selectionStart || 0;
+  if (pos === 0 && ta.value.length > 0 && document.activeElement !== ta) {
+    pos = ta.value.length;
+  }
+  
   const before = ta.value.substring(0, pos);
   const after = ta.value.substring(pos);
   const insert = text;
   ta.value = before + insert + after;
   ta.selectionStart = ta.selectionEnd = pos + insert.length;
+  
+  ta.focus();
 
   saveCurrent();
   closeDiceModal();
   showToast(`${text} を追加しました`);
+
+  localStorage.setItem('dice_last_count', a);
+  localStorage.setItem('dice_last_faces', b);
+}
+
+const DICE_SETS_KEY = 'dice_sets';
+const MAX_DICE_SETS = 5;
+
+function loadDiceSets() {
+  try {
+    const raw = localStorage.getItem(DICE_SETS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveDiceSets(sets) {
+  localStorage.setItem(DICE_SETS_KEY, JSON.stringify(sets));
+}
+
+function renderDiceSets() {
+  const sets = loadDiceSets();
+  const container = document.getElementById('diceSets');
+  
+  if (sets.length === 0) {
+    container.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px;">保存されたセットはありません</div>';
+    return;
+  }
+  
+  container.innerHTML = sets.map((set, index) => `
+    <button class="dice-set-btn" onclick="applyDiceSet(${set.count}, ${set.faces})">
+      🎲 ${set.count}d${set.faces}
+      <span class="remove-set" onclick="event.stopPropagation();removeDiceSet(${index})">✕</span>
+    </button>
+  `).join('');
+}
+
+function applyDiceSet(count, faces) {
+  document.getElementById('diceCount').value = count;
+  document.getElementById('diceFaces').value = faces;
+  updateDicePreview();
+}
+
+function saveDiceSet() {
+  let a = parseInt(document.getElementById('diceCount').value) || 1;
+  let b = parseInt(document.getElementById('diceFaces').value) || 6;
+  
+  if (a < 1) a = 1; else if (a > 10) a = 10;
+  if (b < 1) b = 1; else if (b > 9999) b = 9999;
+  
+  const sets = loadDiceSets();
+  
+  // 重複チェック
+  const exists = sets.some(s => s.count === a && s.faces === b);
+  if (exists) {
+    showToast('このセットは既に保存されています');
+    return;
+  }
+  
+  // 最大数チェック
+  if (sets.length >= MAX_DICE_SETS) {
+    showToast('最大5個まで保存できます（古いものを削除してください）');
+    return;
+  }
+  
+  sets.push({ count: a, faces: b });
+  saveDiceSets(sets);
+  renderDiceSets();
+  showToast(`${a}d${b} を保存しました`);
+}
+
+function removeDiceSet(index) {
+  const sets = loadDiceSets();
+  sets.splice(index, 1);
+  saveDiceSets(sets);
+  renderDiceSets();
+  showToast('セットを削除しました');
 }
 
 function copyCurrentMemo(){
@@ -1073,19 +1217,36 @@ function onCopySuccess(){
   showToast('コピーしました');
 }
 
-function renderLinks(){
-  const memo=getMemo(currentId);if(!memo)return;
-  const parents=getParentMemos(currentId);
-  document.getElementById('parentLinks').innerHTML=parents.length===0
-    ?'<div class="no-links">親リンクなし</div>'
-    :parents.map(p=>`<div class="linked-memo-item" onclick="navigateToLink('${p.id}')"><span class="lm-icon" style="color:var(--danger)">⬆</span><span class="lm-title">${escHtml(p.title||'無題のメモ')}</span></div>`).join('');
-  const children=(memo.childLinks||[]).map(id=>getMemo(id)).filter(Boolean);
-  document.getElementById('childLinks').innerHTML=children.length===0
-    ?'<div class="no-links">子リンクなし</div>'
-    :children.map(c=>`<div class="linked-memo-item"><span class="lm-icon" style="color:var(--primary)">⬇</span><span class="lm-title" onclick="navigateToLink('${c.id}')">${escHtml(c.title||'無題のメモ')}</span><button class="lm-remove" onclick="event.stopPropagation();removeChildLink('${c.id}')">✕</button></div>`).join('');
+function renderLinks() {
+  const memo = getMemo(currentId);
+  if (!memo) return;
+  const parents = getParentMemos(currentId);
+  document.getElementById('parentLinks').innerHTML = parents.length === 0
+    ? '<div class="no-links">親リンクなし</div>'
+    : parents.map(p => `<div class="linked-memo-item">
+        <span class="lm-icon" style="color:var(--warning)">⬆</span>
+        <span class="lm-title" onclick="navigateToLink('${p.id}')">${escHtml(p.title || '無題のメモ')}</span>
+        <button class="lm-remove" onclick="event.stopPropagation();removeParentLink('${p.id}')">✕</button>
+      </div>`).join('');
+  const children = (memo.childLinks || []).map(id => getMemo(id)).filter(Boolean);
+  document.getElementById('childLinks').innerHTML = children.length === 0
+    ? '<div class="no-links">子リンクなし</div>'
+    : children.map(c => `<div class="linked-memo-item">
+        <span class="lm-icon" style="color:var(--primary)">⬇</span>
+        <span class="lm-title" onclick="navigateToLink('${c.id}')">${escHtml(c.title || '無題のメモ')}</span>
+        <button class="lm-remove" onclick="event.stopPropagation();removeChildLink('${c.id}')">✕</button>
+      </div>`).join('');
 }
 function navigateToLink(id){openMemo(id,true);}
 function removeChildLink(lid){const memo=getMemo(currentId);if(!memo)return;memo.childLinks=(memo.childLinks||[]).filter(l=>l!==lid);saveData();renderLinks();renderTree();}
+function removeParentLink(parentId) {
+  const parentMemo = getMemo(parentId);
+  if (!parentMemo) return;
+  parentMemo.childLinks = (parentMemo.childLinks || []).filter(l => l !== currentId);
+  saveData();
+  renderLinks();
+  renderTree();
+}
 
 function renderBreadcrumb(){
   const bc=document.getElementById('breadcrumb');
@@ -1123,6 +1284,52 @@ function addChildLink(lid){
   memo.childLinks.push(lid);memo.updated=Date.now();
   saveData();renderLinkList();renderLinks();renderTree();
   const o=getMemo(lid);showToast(`「${o?.title||'無題'}」を子リンクに追加`);
+}
+
+function openParentLinkModal() {
+  document.getElementById('parentLinkModal').classList.add('open');
+  document.getElementById('parentLinkSearch').value = '';
+  renderParentLinkList();
+  setTimeout(() => document.getElementById('parentLinkSearch').focus(), 300);
+}
+
+function closeParentLinkModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('parentLinkModal').classList.remove('open');
+}
+
+function renderParentLinkList() {
+  const memo = getMemo(currentId);
+  if (!memo) return;
+  const q = document.getElementById('parentLinkSearch').value.toLowerCase();
+  let av = memos.filter(m => m.id !== currentId);
+  if (q) av = av.filter(m => m.title.toLowerCase().includes(q) || m.text.toLowerCase().includes(q));
+  av.sort((a, b) => b.updated - a.updated);
+  
+  // 既に親リンクになっているメモ（このメモをchildLinksに持つメモ）
+  const currentParents = new Set(getParentMemos(currentId).map(m => m.id));
+  
+  document.getElementById('parentLinkList').innerHTML = av.map(m => {
+    if (currentParents.has(m.id)) {
+      return `<div class="modal-item already-linked"><span class="mi-icon">🔗</span><span class="mi-title">${escHtml(m.title || '無題のメモ')}</span><span class="mi-status">追加済み</span></div>`;
+    }
+    return `<div class="modal-item" onclick="addParentLink('${m.id}')"><span class="mi-icon">📄</span><span class="mi-title">${escHtml(m.title || '無題のメモ')}</span></div>`;
+  }).join('') || '<div class="no-links">他のメモがありません</div>';
+}
+
+function addParentLink(parentId) {
+  const parentMemo = getMemo(parentId);
+  if (!parentMemo) return;
+  if (!parentMemo.childLinks) parentMemo.childLinks = [];
+  if (parentMemo.childLinks.includes(currentId)) return;
+  
+  parentMemo.childLinks.push(currentId);
+  parentMemo.updated = Date.now();
+  saveData();
+  renderParentLinkList();
+  renderLinks();
+  renderTree();
+  showToast(`「${parentMemo.title || '無題'}」を親リンクに追加`);
 }
 
 function openDataModal(){
